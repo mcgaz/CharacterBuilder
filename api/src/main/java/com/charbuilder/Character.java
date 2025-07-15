@@ -226,7 +226,7 @@ public class Character {
 
 
     public int getAbilityModifier (double modifier) {
-        return (int) Math.floor((modifier - 10) / 10);
+        return (int) Math.floor((modifier - 10) / 2);
     }
 
     public void setInitiative () {
