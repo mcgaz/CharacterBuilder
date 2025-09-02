@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Character {
 
     public String name;
-    public Species species;
+    public com.charbuilder.utils.Species species;
     public Role role;
     public Size size;
     public int speed;
@@ -54,6 +54,9 @@ public class Character {
     public ArrayList<Proficiencies> armourProficiencies;
     public ArrayList<Proficiencies> weaponProficiencies;
     public ArrayList<SavingThrows> savingThrowProficiencies;
+
+    private AbilityScores abilityScores;
+    private Health health;
 
 //    public int strengthAthletics;
 //    public int dexterityAcrobatics;
