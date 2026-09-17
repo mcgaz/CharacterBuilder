@@ -1,70 +1,42 @@
 package com.charbuilder.model;
 
+import com.charbuilder.model.species.Species;
+import com.charbuilder.service.CharacterFactory;
 import com.charbuilder.service.dice.D6;
 
-import java.util.Arrays;
 
 public class AbilityScores {
     public static final int MIN_SCORE = 1;
     public static final int MAX_SCORE = 30;
 
-    private final int strength;
-    private final int dexterity;
-    private final int constitution;
-    private final int intelligence;
-    private final int wisdom;
-    private final int charisma;
+    private int strength;
+    private int dexterity;
+    private int constitution;
+    private int intelligence;
+    private int wisdom;
+    private int charisma;
 
-    private final int strengthModifier;
-    private final int dexterityModifier;
-    private final int constitutionModifier;
-    private final int intelligenceModifier;
-    private final int wisdomModifier;
-    private final int charismaModifier;
 
     public AbilityScores(int strength, int dexterity, int constitution,
-                            int intelligence, int wisdom, int charisma){
-        this.strength = validate(strength);
-        this.dexterity = validate(dexterity);
-        this.constitution = validate(constitution);
-        this.intelligence = validate(intelligence);
-        this.wisdom = validate(wisdom);
-        this.charisma = validate(charisma);
-
-        this.strengthModifier = getModifier(strength);
-        this.dexterityModifier = getModifier(dexterity);
-        this.constitutionModifier = getModifier(constitution);
-        this.intelligenceModifier = getModifier(intelligence);
-        this.wisdomModifier = getModifier(wisdom);
-        this.charismaModifier = getModifier(charisma);
+                            int intelligence, int wisdom, int charisma, Species species){
+        this.strength = validate(strength + species.baseStrength);
+        this.dexterity = validate(dexterity + species.baseDexterity);
+        this.constitution = validate(constitution + species.baseConstitution);
+        this.intelligence = validate(intelligence + species.baseIntelligence);
+        this.wisdom = validate(wisdom + species.baseWisdom);
+        this.charisma = validate(charisma + species.baseCharisma);
 
     }
 
     public AbilityScores(){
-        this.strength = validate(strength);
-        this.dexterity = validate(dexterity);
-        this.constitution = validate(constitution);
-        this.intelligence = validate(intelligence);
-        this.wisdom = validate(wisdom);
-        this.charisma = validate(charisma);
-
-        this.strengthModifier = getModifier(strength);
-        this.dexterityModifier = getModifier(dexterity);
-        this.constitutionModifier = getModifier(constitution);
-        this.intelligenceModifier = getModifier(intelligence);
-        this.wisdomModifier = getModifier(wisdom);
-        this.charismaModifier = getModifier(charisma);
-
-    }
-
-    public static AbilityScores createRandom(){
-        return new AbilityScores(
-                creationRoll(),
-                creationRoll(),
-                creationRoll(),
-                creationRoll(),
-                creationRoll(),
-                creationRoll()
+        this(
+            CharacterFactory.creationRoll(),
+            CharacterFactory.creationRoll(),
+            CharacterFactory.creationRoll(),
+            CharacterFactory.creationRoll(),
+            CharacterFactory.creationRoll(),
+            CharacterFactory.creationRoll(),
+            CharacterFactory.getRandomSpecies()
             );
     }
 
@@ -81,20 +53,6 @@ public class AbilityScores {
         return score;
     }
 
-    public  static int creationRoll() {
-        return validate(Arrays.stream(D6.rollHighest(4, 3)).sum());
-    }
-
-    private int getModifier(int ability) {
-        return (ability - 10) / 2;
-    }
-
-/*
-    public static int getModifier(int score){
-        return (score - 10) / 2;
-    }
-*/
-
     /**
      * Applies an Ability Score Improvement (ASI) to this set of scores.
      * @param ability The ability to improve (e.g., "strength").
@@ -102,7 +60,7 @@ public class AbilityScores {
      * @return A new AbilityScores instance with the updated score.
      * @throws IllegalArgumentException if the ability is invalid or the increase would go over the limit.
      */
-    public AbilityScores withIncrease(Abilities ability, int amount) {
+   /* public AbilityScores withIncrease(Abilities ability, int amount) {
         int newStrength = this.strength;
         int newDexterity = this.dexterity;
         int newConstitution = this.constitution;
@@ -132,17 +90,20 @@ public class AbilityScores {
                 validate(newConstitution),
                 validate(newIntelligence),
                 validate(newWisdom),
-                validate(newCharisma));
-    }
+                validate(newCharisma);
+    }*/
 
     /** Applies an ASI to two abilities (e.g., +1 Dex, +1 Con). */
-    public AbilityScores withIncrease(Abilities ability1, int amount1, Abilities ability2, int amount2) {
-        if (amount1 < 0 || amount2 < 0 || (amount1 + amount2) > 2) {
-            throw new IllegalArgumentException("Total ASI increase cannot exceed +2");
-        }
-        AbilityScores step1 = this.withIncrease(ability1, amount1);
-        return step1.withIncrease(ability2, amount2);
-    }
+//    public AbilityScores withIncrease(Abilities ability1, int amount1, Abilities ability2, int amount2) {
+//        if (amount1 < 0 || amount2 < 0 || (amount1 + amount2) > 2) {
+//            throw new IllegalArgumentException("Total ASI increase cannot exceed +2");
+//        }
+//        AbilityScores step1 = this.withIncrease(ability1, amount1);
+//        return step1.withIncrease(ability2, amount2);
+//    }
+
+
+    private int calculateModifier(int ability) { return (int) Math.floor((ability - 10) / 2.0) ;}
 
     public int getStrength() {
         return strength;
@@ -166,6 +127,54 @@ public class AbilityScores {
 
     public int getCharisma() {
         return charisma;
+    }
+
+    public int getStrengthModifier() {
+        return this.calculateModifier(this.strength);
+    }
+
+    public int getDexterityModifier() {
+        return this.calculateModifier(this.dexterity);
+    }
+
+    public int getConstitutionModifier() {
+        return this.calculateModifier(this.constitution);
+    }
+
+    public int getIntelligenceModifier() {
+        return this.calculateModifier(this.intelligence);
+    }
+
+    public int getWisdomModifier() {
+        return this.calculateModifier(this.wisdom);
+    }
+
+    public int getCharismaModifier() {
+        return this.calculateModifier(this.charisma);
+    }
+
+    public void increaseStrength(int strength) {
+        this.strength += strength;
+    }
+
+    public void increaseDexterity(int dexterity) {
+        this.dexterity += dexterity;
+    }
+
+    public void increaseConstitution (int constitution) {
+        this.constitution += constitution;
+    }
+
+    public void increaseIntelligence (int intelligence) {
+        this.intelligence += intelligence;
+    }
+
+    public void increaseWisdom (int wisdom) {
+        this.wisdom += wisdom;
+    }
+
+    public void increaseCharisma (int charisma) {
+        this.charisma += charisma;
     }
 
 }

@@ -1,51 +1,81 @@
 package com.charbuilder.model;
 
+import com.charbuilder.model.species.Role;
+import com.charbuilder.service.dice.*;
+
+import java.util.Arrays;
+
 public class Health {
-    private final int maxHitPoints;
-    private final int currentHitPoints;
-    private final int temporaryHitPoints;
-    private final int numDeathSaves;
-    private final Boolean inDeathSaves;
+    private int maxHitPoints;
+    private int currentHitPoints;
+    private int temporaryHitPoints;
+    private int numDeathSaves;
+    private Boolean inDeathSaves;
+    private Die hitDie;
+    private int hitDice;
 
-    public Health(int maxHitPoints, int currentHitPoints, int temporaryHitPoints, int numDeathSaves, Boolean inDeathSaves){
-        if(maxHitPoints < 0) throw new IllegalArgumentException("Max HitPoints cannot be negative");
-        if(currentHitPoints < 0) throw new IllegalArgumentException("Current HitPoints cannot be negative");
-        if(temporaryHitPoints < 0) throw new IllegalArgumentException("Temporary HitPoints cannot be negative");
-        if(currentHitPoints > maxHitPoints) throw new IllegalArgumentException("Current HitPoints cannot exceed Max HitPoints");
-        if(numDeathSaves < 0) throw new IllegalArgumentException("Number of Death Saves cannot be negative");
+    public Health(Role role, int level, int constitutionModifier){
+//        if(maxHitPoints < 0) throw new IllegalArgumentException("Max HitPoints cannot be negative");
+//        if(currentHitPoints < 0) throw new IllegalArgumentException("Current HitPoints cannot be negative");
+//        if(temporaryHitPoints < 0) throw new IllegalArgumentException("Temporary HitPoints cannot be negative");
+//        if(currentHitPoints > maxHitPoints) throw new IllegalArgumentException("Current HitPoints cannot exceed Max HitPoints");
+//        if(numDeathSaves < 0) throw new IllegalArgumentException("Number of Death Saves cannot be negative");
 
-        this.maxHitPoints = maxHitPoints;
-        this.currentHitPoints = this.validateMax(currentHitPoints);
-        this.temporaryHitPoints = temporaryHitPoints;
-        this.numDeathSaves = numDeathSaves;
-        this.inDeathSaves = inDeathSaves;
+        this.maxHitPoints = this.getHitPoints(role.hitDie(), level, constitutionModifier);
+        this.currentHitPoints = this.maxHitPoints;
+        this.temporaryHitPoints = 0;
+        this.numDeathSaves = 0;
+        this.inDeathSaves = false;
+        this.hitDie = role.hitDie();
+        this.hitDice = level;
+
     }
 
-    public Health takeDamage(int damage){
-        int newMaxHitPoints = this.maxHitPoints;
-        int newCurrentHitPoints = this.currentHitPoints;
-        int newTemporaryHitPoints = this.temporaryHitPoints;
-        int newNumDeathSaves = this.numDeathSaves;
-        Boolean newInDeathSaves = this.inDeathSaves;
+//    public Health takeDamage(int damage){
+//        int newMaxHitPoints = this.maxHitPoints;
+//        int newCurrentHitPoints = this.currentHitPoints;
+//        int newTemporaryHitPoints = this.temporaryHitPoints;
+//        int newNumDeathSaves = this.numDeathSaves;
+//        Boolean newInDeathSaves = this.inDeathSaves;
+//
+//        if (damage < 0) {
+//            throw new IllegalArgumentException("Damage cannot be negative");
+//        }else if (newCurrentHitPoints + newTemporaryHitPoints == 0){
+//            newNumDeathSaves += 1;
+//            return new Health(newMaxHitPoints, 0, 0, newNumDeathSaves, Boolean.TRUE);
+//        }else if (damage >= newCurrentHitPoints + newTemporaryHitPoints){
+//            return new Health(newMaxHitPoints, 0, 0, newNumDeathSaves, Boolean.TRUE);
+//        }else if (newCurrentHitPoints > 0 && damage > newTemporaryHitPoints) {
+//            damage -= newTemporaryHitPoints;
+//            newCurrentHitPoints -= damage;
+//            return new Health(newMaxHitPoints, newCurrentHitPoints, 0, newNumDeathSaves, newInDeathSaves);
+//        }else if (newTemporaryHitPoints == 0){
+//            newCurrentHitPoints -= damage;
+//            return new Health(newMaxHitPoints, newCurrentHitPoints, newTemporaryHitPoints, newNumDeathSaves, newInDeathSaves);
+//        }else if (newCurrentHitPoints > 0 && damage < newTemporaryHitPoints) {
+//            newTemporaryHitPoints -= damage;
+//            return new Health(newMaxHitPoints, newCurrentHitPoints, newTemporaryHitPoints, newNumDeathSaves, newInDeathSaves);
+//        }else { throw new IllegalArgumentException("PLACEHOLDER EXCEPTION - CHECK CONDITIONAL BRANCHES") ;}
+//    }
 
-        if (damage < 0) {
-            throw new IllegalArgumentException("Damage cannot be negative");
-        }else if (newCurrentHitPoints + newTemporaryHitPoints == 0){
-            newNumDeathSaves += 1;
-            return new Health(newMaxHitPoints, 0, 0, newNumDeathSaves, Boolean.TRUE);
-        }else if (damage >= newCurrentHitPoints + newTemporaryHitPoints){
-            return new Health(newMaxHitPoints, 0, 0, newNumDeathSaves, Boolean.TRUE);
-        }else if (newCurrentHitPoints > 0 && damage > newTemporaryHitPoints) {
-            damage -= newTemporaryHitPoints;
-            newCurrentHitPoints -= damage;
-            return new Health(newMaxHitPoints, newCurrentHitPoints, 0, newNumDeathSaves, newInDeathSaves);
-        }else if (newTemporaryHitPoints == 0){
-            newCurrentHitPoints -= damage;
-            return new Health(newMaxHitPoints, newCurrentHitPoints, newTemporaryHitPoints, newNumDeathSaves, newInDeathSaves);
-        }else if (newCurrentHitPoints > 0 && damage < newTemporaryHitPoints){
-            newTemporaryHitPoints -= damage;
-            return new Health(newMaxHitPoints, newCurrentHitPoints, newTemporaryHitPoints, newNumDeathSaves, newInDeathSaves);
-
+    private int getHitPoints(Die hitDie, int level, int conModifier) {
+        switch (hitDie){
+            case D6:
+                int d6Sum = Arrays.stream(D6.roll(level)).sum();
+                return d6Sum + level * conModifier;
+            case D8:
+                int d8Sum = Arrays.stream(D8.roll(level)).sum();
+                return d8Sum + level * conModifier;
+            case D12:
+                int d12Sum = Arrays.stream(D12.roll(level)).sum();
+                return d12Sum + level * conModifier;
+            case D20:
+                int d20Sum = Arrays.stream(D20.roll(level)).sum();
+                return d20Sum + level * conModifier;
+            default:
+                System.out.println("Unknown HitPoint die type, setting HP to zero.");
+                return 0;
+        }
     }
 
     //TODO death save condition (negative HP)
@@ -87,5 +117,13 @@ public class Health {
 
     public Boolean getInDeathSaves() {
         return inDeathSaves;
+    }
+
+    public void increaseHitPoints(int hitPoints) {
+        this.currentHitPoints += hitPoints;
+    }
+
+    public void increaseMaxHitPoints(int hitPoints) {
+        this.maxHitPoints += hitPoints;
     }
 }

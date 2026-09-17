@@ -1,8 +1,6 @@
 package com.charbuilder.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
 
 import com.charbuilder.model.items.Armour;
 import com.charbuilder.model.items.Weapons;
@@ -12,70 +10,58 @@ import com.charbuilder.model.traits.Proficiencies;
 import com.charbuilder.model.traits.SavingThrows;
 import com.charbuilder.model.traits.Size;
 import com.charbuilder.model.traits.Skills;
-import com.charbuilder.service.dice.*;
+import com.charbuilder.service.CharacterFactory;
+import com.charbuilder.service.dice.D20;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static com.charbuilder.service.CharacterFactory.*;
 
 
 public class Character {
 
-    public String name;
-    public Species species;
-    public Role role;
-    public Size size;
-    public int speed;
+    private final String name;
+    private final Species species;
+    private Role role;
+    private final Size size;
+    private int speed;
 
-    public int level;
-    public int baseArmourClass;
+    private int level;
+    private int baseArmourClass;
+    private int initiative;
 
-    public Boolean hidden;
-    public Background background;
-    public int attacks;
+    private Boolean hidden;
+    private final Background background;
+    private int attacks;
 
     private AbilityScores abilityScores;
     private Health health;
 
-    public ArrayList<Proficiencies> skillProficiencies;
-    public ArrayList<Proficiencies> armourProficiencies;
-    public ArrayList<Proficiencies> weaponProficiencies;
-    public ArrayList<SavingThrows> savingThrowProficiencies;
+    private ArrayList<Proficiencies> skillProficiencies;
+    private ArrayList<Proficiencies> armourProficiencies;
+    private ArrayList<Proficiencies> weaponProficiencies;
+    private ArrayList<SavingThrows> savingThrowProficiencies;
 
     public Character() {
 
-        this(getRandomName(), getRandomSpecies(), getRandomRole(), getRandomBackground(), getRandomLevel());
+        this(getRandomName(), getRandomSpecies(), getRandomRole(), getRandomBackground(), new AbilityScores());
 
     }
 
-    public Character(String name, Species species, Role role, Background background, int level){
+    public Character(String name, Species species, Role role, Background background, AbilityScores abilityScores){
         this.name = name;
+        this.level = 1;
         this.species = species;
         this.role = role;
-        this.level = level;
         this.background = background;
         this.size = species.size;
         this.speed = species.speed;
-        this.abilityScores = new AbilityScores().createRandom;
-/*        this.strength = creationRoll() + species.baseStrength;
-        this.dexterity = creationRoll() + species.baseDexterity;
-        this.constitution = creationRoll() + species.baseConstitution;
-        this.intelligence = creationRoll() + species.baseIntelligence;
-        this.wisdom = creationRoll() + species.baseWisdom;
-        this.charisma = creationRoll() + species.baseCharisma;
-        this.strengthModifier = getAbilityModifier(strength);
-        this.dexterityModifier = getAbilityModifier(dexterity);
-        this.constitutionModifier = getAbilityModifier(constitution);
-        this.intelligenceModifier = getAbilityModifier(intelligence);
-        this.wisdomModifier = getAbilityModifier(wisdom);
-        this.charismaModifier = getAbilityModifier(charisma);*/
-        this.hitDie = role.hitDie();
-        this.hitDice = level;
-        this.hitPoints = getHitPoints(role.hitDie(), level);
-        this.maxHitPoints = this.hitPoints;
-        this.baseArmourClass = 10 + dexterityModifier;
+        this.abilityScores = abilityScores;
+        this.health = new Health(role, level, abilityScores.getConstitutionModifier());
+        this.baseArmourClass = 10 + abilityScores.getDexterityModifier();
         this.skillProficiencies = background.skillProficiencies();
+        this.initiative = D20.rollOne() + abilityScores.getDexterityModifier();
 
-        if (this.species == Species.HILL_DWARF) { increaseHitPoints(level); }
-
-        if (this.role == Role.BARBARIAN) { this.baseArmourClass += constitutionModifier; }
+        if (this.role == Role.BARBARIAN) { this.baseArmourClass += this.abilityScores.getConstitutionModifier(); }
 
 
         // TODO implement logging
@@ -91,111 +77,6 @@ public class Character {
         // TODO call out to name generator
         // TODO impose ability limits
         // TODO include half elf 2 random proficiencies
-
-    }
-
-//    public Character(Species species, Role role, int level, int strength, int dexterity, int constitution, int intelligence, int wisdom, int charisma){
-//        this.species = species;
-//        this.role = role;
-//        this.level = level;
-//        this.size = species.size;
-//        this.strength = strength;
-//        this.dexterity = dexterity;
-//        this.constitution = constitution;
-//        this.intelligence = intelligence;
-//        this.wisdom = wisdom;
-//        this.charisma = charisma;
-//        this.strengthModifier = getAbilityModifier(strength);
-//        this.dexterityModifier = getAbilityModifier(dexterity);
-//        this.constitutionModifier = getAbilityModifier(constitution);
-//        this.intelligenceModifier = getAbilityModifier(intelligence);
-//        this.wisdomModifier = getAbilityModifier(wisdom);
-//        this.charismaModifier = getAbilityModifier(charisma);
-//        this.hitDie = role.hitDie();
-//        this.hitPoints = getHitPoints(role.hitDie(), level);
-//        this.baseArmourClass = 10 + dexterityModifier;
-//
-//        if (this.species == Species.HILL_DWARF) { increaseHitPoints(level); }
-//
-//        if (this.role == Role.BARBARIAN) { this.baseArmourClass += constitutionModifier; }
-//    }
-
-    private int creationRoll(){
-        int result;
-        try {
-            result = Arrays.stream(D6.rollHighest(4, 3)).sum();
-            if (result < 3 || result > 18) {throw new IllegalStateException();}
-            return result;
-
-        } catch (IllegalStateException e){
-            System.out.println("Creation Roll can't be less than 3 or greater than 18: " + e.getMessage());
-            System.out.println("Defaulting to 10");
-            result = 10;
-            return result;
-        }
-    }
-
-    private static String getRandomName() {
-        final Random RANDOM = new Random();
-        String[] nameArray = {"Angry Fletcher", "Tired Cook", "Sassy Duck", "Handsy Priest"};
-        int randomIndex = RANDOM.nextInt(nameArray.length);
-        return nameArray[randomIndex];
-    }
-
-    private static Species getRandomSpecies() {
-        final Random RANDOM = new Random();
-        Species[] speciesArray = Species.values();
-        int randomIndex = RANDOM.nextInt(speciesArray.length);
-        return speciesArray[randomIndex];
-    }
-
-    private static Role getRandomRole() {
-        final Random RANDOM = new Random();
-        Role[] rolesArray = Role.values();
-        int randomIndex = RANDOM.nextInt(rolesArray.length);
-//        System.out.println(randomIndex);
-        return rolesArray[randomIndex];
-    }
-
-    private static Background getRandomBackground() {
-        final Random RANDOM = new Random();
-        Background[] backgroundsArray = Background.values();
-        int randomIndex = RANDOM.nextInt(backgroundsArray.length);
-        return backgroundsArray[randomIndex];
-    }
-
-    private static int getRandomLevel() {
-//        System.out.println("RANDOM LEVEL: " + level);
-        return com.charbuilder.service.dice.D20.rollOne();
-    }
-
-    private int getHitPoints(Die hitDie, int level) {
-        switch (hitDie){
-            case D6:
-                int d6Sum = Arrays.stream(D6.roll(level)).sum();
-                return d6Sum + level * this.constitutionModifier;
-            case D8:
-                int d8Sum = Arrays.stream(D8.roll(level)).sum();
-                return d8Sum + level * this.constitutionModifier;
-            case D12:
-                int d12Sum = Arrays.stream(D12.roll(level)).sum();
-                return d12Sum + level * this.constitutionModifier;
-            case D20:
-                int d20Sum = Arrays.stream(D20.roll(level)).sum();
-                return d20Sum + level * this.constitutionModifier;
-            default:
-                System.out.println("Unknown HitPoint die type, setting HP to zero.");
-                return 0;
-        }
-    }
-
-
-
-/*    public int getAbilityModifier (double modifier) {
-        return (int) Math.floor((modifier - 10) / 2);
-    }*/
-
-    public void setInitiative () {
 
     }
 
@@ -219,33 +100,7 @@ public class Character {
 //        TODO ability score level up dependent on level
     }
 
-    public void increaseHitPoints(int hitPoints) {
-        this.strength += hitPoints;
-    }
 
-    public void increaseStrength(int strength) {
-        this.strength += strength;
-    }
-
-    public void increaseDexterity(int dexterity) {
-        this.dexterity += dexterity;
-    }
-
-    public void increaseConstitution (int constitution) {
-        this.constitution += constitution;
-    }
-
-    public void increaseIntelligence (int intelligence) {
-        this.intelligence += intelligence;
-    }
-
-    public void increaseWisdom (int wisdom) {
-        this.wisdom += wisdom;
-    }
-
-    public void increaseCharisma (int charisma) {
-        this.charisma += charisma;
-    }
 
 //    @Override
 //    public String toString() {
